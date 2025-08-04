@@ -1,20 +1,67 @@
-import React from "react";
+'use client';
 
-const LoginPage = () => {
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styles from './auth.module.scss';
+import { validatePhoneNumber } from '@/app/utils/validation';
+import { useAuth } from '../context/authContext';
+import Input from '../components/Input';
+import Button from '../components/Buttton';
+
+export default function AuthPage() {
+  const [phone, setPhone] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const validationError = validatePhoneNumber(phone);
+    
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+    
+    setError('');
+    setIsLoading(true);
+    
+    try {
+      await login();
+      router.push('/dashboard');
+    } catch (err) {
+      setError('Failed to login. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col h-[100vh] justify-center items-center">
-      <div className="border-1 rounded-xl p-4 scale-130 bg-gray-100"> 
-      <h2 className="text-3xl font-bold mb-5">Login</h2>
-      <form className=" flex flex-col gap-1">
-        <label htmlFor="username">username</label>
-        <input type="text" id="username" className=" rounded bg-white shadow" />
-        <label htmlFor="">password</label>
-        <input type="text" id="password" className="rounded bg-white shadow" />
-        <button type="submit" className="bg-blue-500 rounded text-white py-1 cursor-pointer mt-4">login</button>
-      </form>
+    <div className={styles.authContainer}>
+      <div className={styles.authCard}>
+        <h1 className={styles.title}>Welcome</h1>
+        <p className={styles.subtitle}>Please enter your phone number</p>
+        
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <Input
+            type="tel"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="09123456789"
+            label="Iranian Phone Number"
+            error={error}
+          />
+          <Button 
+            type="submit" 
+            variant="primary" 
+            isLoading={isLoading}
+            className={styles.submitButton}
+          >
+            Login
+          </Button>
+        </form>
       </div>
     </div>
   );
-};
-
-export default LoginPage;
+}
